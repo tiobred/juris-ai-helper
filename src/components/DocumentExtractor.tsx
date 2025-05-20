@@ -3,52 +3,73 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileSearch } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 type DocumentExtractorProps = {
   onExtractedContent: (content: string) => void;
 };
 
 export default function DocumentExtractor({ onExtractedContent }: DocumentExtractorProps) {
+  const { toast } = useToast();
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractedText, setExtractedText] = useState("");
   const [status, setStatus] = useState("");
+
+  // Check if we're in a browser extension environment
+  const isExtensionEnvironment = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
 
   const extractContent = async () => {
     setIsExtracting(true);
     setStatus("Analisando página...");
 
     try {
-      // Execute script in the current tab to extract content
-      chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-        const currentTab = tabs[0];
-        if (!currentTab.id) {
-          setStatus("Erro: Nenhuma aba ativa encontrada");
-          setIsExtracting(false);
-          return;
-        }
-
-        chrome.scripting.executeScript(
-          {
-            target: { tabId: currentTab.id },
-            func: extractDocumentFromPJe,
-          },
-          (results) => {
-            if (chrome.runtime.lastError) {
-              setStatus(`Erro: ${chrome.runtime.lastError.message}`);
-              setIsExtracting(false);
-              return;
-            }
-
-            const extractedContent = results[0].result as string;
-            setExtractedText(extractedContent);
-            onExtractedContent(extractedContent);
-            setStatus(`Conteúdo extraído com sucesso (${extractedContent.length} caracteres)`);
+      if (isExtensionEnvironment) {
+        // Extension environment - use Chrome APIs
+        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+          const currentTab = tabs[0];
+          if (!currentTab.id) {
+            setStatus("Erro: Nenhuma aba ativa encontrada");
             setIsExtracting(false);
+            return;
           }
-        );
-      });
-    } catch (error) {
-      setStatus(`Erro na extração: ${error}`);
+
+          chrome.scripting.executeScript(
+            {
+              target: { tabId: currentTab.id },
+              func: extractDocumentFromPJe,
+            },
+            (results) => {
+              if (chrome.runtime.lastError) {
+                setStatus(`Erro: ${chrome.runtime.lastError.message}`);
+                setIsExtracting(false);
+                return;
+              }
+
+              const extractedContent = results[0].result as string;
+              setExtractedText(extractedContent);
+              onExtractedContent(extractedContent);
+              setStatus(`Conteúdo extraído com sucesso (${extractedContent.length} caracteres)`);
+              setIsExtracting(false);
+            }
+          );
+        });
+      } else {
+        // Web environment - show mock data for development/preview
+        setStatus("Modo de desenvolvimento: usando dados de exemplo...");
+        setTimeout(() => {
+          const mockContent = "EXEMPLO DE DOCUMENTO JUDICIAL\n\nProcesso nº 1234-56.2023.8.26.0100\nAutor: João da Silva\nRéu: Empresa ABC Ltda.\n\nTrata-se de ação de indenização por danos morais e materiais...";
+          setExtractedText(mockContent);
+          onExtractedContent(mockContent);
+          setStatus(`Conteúdo de exemplo carregado (${mockContent.length} caracteres)`);
+          setIsExtracting(false);
+          toast({
+            title: "Modo de desenvolvimento",
+            description: "Usando dados de exemplo pois não estamos em um ambiente de extensão",
+          });
+        }, 1000);
+      }
+    } catch (error: any) {
+      setStatus(`Erro na extração: ${error.message || error}`);
       setIsExtracting(false);
     }
   };
@@ -67,7 +88,7 @@ export default function DocumentExtractor({ onExtractedContent }: DocumentExtrac
           className="flex items-center space-x-1"
         >
           <FileSearch className="h-4 w-4 mr-1" />
-          <span>Extrair documento</span>
+          <span>{isExtracting ? "Extraindo..." : "Extrair documento"}</span>
         </Button>
       </div>
       
