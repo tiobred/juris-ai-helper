@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileSearch } from "lucide-react";
+import { FileSearch, FileDown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 type DocumentExtractorProps = {
@@ -105,6 +105,41 @@ export default function DocumentExtractor({ onExtractedContent }: DocumentExtrac
         placeholder="Clique em 'Extrair documento' ou cole o texto manualmente aqui..."
         className="min-h-[150px] w-full"
       />
+
+      <div className="flex justify-end">
+        <Button
+          onClick={() => {
+            if (extractedText) {
+              const blob = new Blob([extractedText], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'documento-extraido.txt';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              
+              toast({
+                title: "Download concluído",
+                description: "O documento extraído foi baixado com sucesso.",
+              });
+            } else {
+              toast({
+                title: "Sem conteúdo",
+                description: "Não há texto para baixar.",
+                variant: "destructive",
+              });
+            }
+          }}
+          variant="outline"
+          size="sm"
+          disabled={!extractedText}
+        >
+          <FileDown className="h-4 w-4 mr-1" />
+          Baixar texto
+        </Button>
+      </div>
     </div>
   );
 }

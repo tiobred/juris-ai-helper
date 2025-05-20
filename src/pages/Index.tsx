@@ -4,8 +4,10 @@ import JusIAHeader from "@/components/JusIAHeader";
 import AIProvider from "@/components/AIProvider";
 import PromptEditor from "@/components/PromptEditor";
 import DocumentExtractor from "@/components/DocumentExtractor";
+import S3RepositoryConfig from "@/components/S3RepositoryConfig";
 import AIAnalysisResult from "@/components/AIAnalysisResult";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 
 const DEFAULT_LEGAL_PROMPT = `Você é um assessor jurídico especializado. Analise este processo judicial e forneça:
@@ -29,6 +31,7 @@ const Index = () => {
   const [analysisResult, setAnalysisResult] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [documentSource, setDocumentSource] = useState<"page" | "s3">("page");
 
   // Initialize with default prompt
   useEffect(() => {
@@ -109,10 +112,26 @@ const Index = () => {
           onApiKeyChange={setApiKey}
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DocumentExtractor onExtractedContent={setDocumentContent} />
-          <PromptEditor prompt={prompt} onPromptChange={setPrompt} />
-        </div>
+        <Tabs defaultValue="page" onValueChange={(value) => setDocumentSource(value as "page" | "s3")}>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="page">Extrair da Página</TabsTrigger>
+            <TabsTrigger value="s3">Repositório S3</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="page" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DocumentExtractor onExtractedContent={setDocumentContent} />
+              <PromptEditor prompt={prompt} onPromptChange={setPrompt} />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="s3" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <S3RepositoryConfig onDocumentFetched={setDocumentContent} />
+              <PromptEditor prompt={prompt} onPromptChange={setPrompt} />
+            </div>
+          </TabsContent>
+        </Tabs>
         
         <Separator />
         
