@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,12 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Add legal-themed colors
+				legal: {
+					navy: '#1a365d',
+					gold: '#c9b037',
+					accent: '#e2e8f0'
 				}
 			},
 			borderRadius: {
