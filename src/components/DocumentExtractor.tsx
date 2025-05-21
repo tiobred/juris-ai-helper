@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -357,8 +356,12 @@ function extractDocumentFromPJe() {
       } else {
         // Try to get content from iframe if present (common in PJe)
         const iframe = document.querySelector('iframe[id*="documento"]');
-        if (iframe && iframe.contentDocument) {
-          text = iframe.contentDocument.body.textContent || "";
+        if (iframe) {
+          // Cast the iframe to HTMLIFrameElement to access contentDocument
+          const iframeElement = iframe as HTMLIFrameElement;
+          if (iframeElement.contentDocument) {
+            text = iframeElement.contentDocument.body.textContent || "";
+          }
         } else {
           // Just get all text from the main content area or body as a fallback
           const mainContent = document.querySelector('main, .container, .content, #conteudo');
